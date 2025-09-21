@@ -3,7 +3,7 @@ import NavBar from './components/NavBar'
 import SettingPage from './pages/SettingPage'
 import StatusPage from './pages/StatusPage'
 import SignDocuments from './pages/SignDocument'
-
+import StatusInfo from './components/StatusInfo'
  
 
 
@@ -40,7 +40,9 @@ const router = createBrowserRouter([
       {
         path: 'sign-doc',
         element: <SignDocuments/>
-      },
+      }, 
+       { path: 'status/:signatureId/:documentId', element: <StatusInfo /> }, 
+
       // {
       //   path:'generate-potfolio',
       //   element:<ResumeForm/>

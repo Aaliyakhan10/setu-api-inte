@@ -1,3 +1,4 @@
+import axios from 'axios';
 import React, { useState } from 'react';
 
 function UploadSignStatus() {
@@ -6,25 +7,22 @@ function UploadSignStatus() {
   const [documentId, setDocumentId] = useState('');
   const [signatureId, setSignatureId] = useState('');
   const [signatureUrl, setSignatureUrl] = useState('');
-  const [signatureStatus, setSignatureStatus] = useState('');
-  const [downloadUrl, setDownloadUrl] = useState('');
+
   const [error, setError] = useState('');
 
-
-
   const saveRequestToHistory = (docId, sigId) => {
-  const key = 'signatureRequests';
-  const existing = JSON.parse(localStorage.getItem(key)) || [];
-  const updated = [...existing, { documentId: docId, signatureId: sigId }];
-  localStorage.setItem(key, JSON.stringify(updated));
-};
-
+    const key = 'signatureRequests';
+   
+    const existing = JSON.parse(localStorage.getItem(key)) || [];
+    const updated = [...existing, { documentId: docId, signatureId: sigId }];
+    localStorage.setItem(key, JSON.stringify(updated));
+  };
 
   const getCredentials = () => {
     return {
       xClientId: localStorage.getItem('clientId'),
       xClientSecret: localStorage.getItem('clientSecret'),
-      xProductInstanceId: localStorage.getItem('productInstanceId')
+      xProductInstanceId: localStorage.getItem('productInstanceId'),
     };
   };
 
@@ -50,63 +48,97 @@ function UploadSignStatus() {
       setUploading(true);
       setError('');
 
-      // 📤 Upload document
       const formData = new FormData();
-      formData.append('name', pdfFile.name);
       formData.append('document', pdfFile);
+      formData.append('name', "sample.pdf");
 
-      const uploadRes = await fetch('https://dg-sandbox.setu.co/api/documents', {
-        method: 'POST',
-        headers: {
-          'x-client-id': xClientId,
-          'x-client-secret': xClientSecret,
-          'x-product-instance-id': xProductInstanceId
-        },
-        body: formData
-      });
+      for (const pair of formData.entries()) {
+        console.log(pair[0], pair[1]);
+      }
 
-      const uploadData = await uploadRes.json();
-      if (!uploadRes.ok) throw new Error(uploadData?.message || 'Document upload failed.');
+      const uploadRes = await axios.post(
+        '/api/documents',
+        formData,
+        {
+          headers: {
+            'x-client-id': xClientId,
+            'x-client-secret': xClientSecret,
+            'x-product-instance-id': xProductInstanceId,
+          },
+        }
+      );
 
-      const docId = uploadData?.data?.id;
+      const uploadData = uploadRes.data;
+      if (!uploadRes.status || uploadRes.status >= 400) {
+        throw new Error(uploadData?.message || 'Document upload failed.');
+      }
+      console.log('Upload Response:', uploadData);
+
+      const docId = uploadData?.id;
+      console.log('Uploaded Document ID:', docId);
       setDocumentId(docId);
-      const signatureRes = await fetch('https://dg-sandbox.setu.co/api/signature', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-client-id': xClientId,
-          'x-client-secret': xClientSecret,
-          'x-product-instance-id': xProductInstanceId
+
+
+     const signatureRes = await axios.post(
+  '/api/signature',
+  {
+    documentId: docId,
+    redirectUrl: 'https://yourapp.com/callback',
+    signers: [
+      {
+        displayName: 'John Doe',
+        birthYear: '1990',
+        identifier: '9999999999',
+        identifierType: 'PHONE_NUMBER',
+        signature: {
+          onPages: ['1'],
+          position: 'bottom-left',
+          height: 60,
+          width: 180,
         },
-        body: JSON.stringify({
-          documentId: docId,
-          redirectUrl: 'https://example.com/callback',
-          signers: [
-            { 
-               displayName: "John Doe",
-              birthYear: '1990',
-              identifier: '9999999999',
-              identifierType: 'PHONE_NUMBER'
-            }
-          ]
-        })
-      });
+      },
+    ],
+  },
+  {
+    headers: {
+      'Content-Type': 'application/json',
+      'x-client-id': xClientId,
+      'x-client-secret': xClientSecret,
+      'x-product-instance-id': xProductInstanceId,
+    },
+  }
+);
 
-      const signatureData = await signatureRes.json();
-      if (!signatureRes.ok) throw new Error(signatureData?.message || 'Signature request failed.');
 
-      setSignatureId(signatureData?.data?.id);
-      setSignatureUrl(signatureData?.data?.url);
-    saveRequestToHistory(docId, signatureId);
+      const signatureData = signatureRes.data;
+      if (!signatureRes.status || signatureRes.status >= 400) {
+        throw new Error(signatureData?.message || 'Signature request failed.');
+      }
+
+      setSignatureId(signatureData?.id);
+      console.log('Signature Response:', signatureData);
+      console.log('Signature ID:', signatureData?.id);
+      console.log('Signature URL:', signatureData?.signers?.[0]?.url);
+      setSignatureUrl(signatureData?.signers?.[0]?.url);
+      saveRequestToHistory(docId, signatureData?.id);
 
     } catch (err) {
-      setError(err.message || 'Something went wrong.');
+       if (err.response) {
+   console.error('Backend error response:', err.response.data);
+    // Try to print nested error message
+    const backendError = err.response.data.error || err.response.data;
+    const message = backendError.message || JSON.stringify(backendError) || err.message;
+    setError(message);
+  } else {
+    setError(err.message || 'Something went wrong.');
+  }
     } finally {
       setUploading(false);
     }
   };
 
- 
+
+
   return (
     <div>
       <h2>Upload & Sign PDF</h2>
@@ -116,24 +148,7 @@ function UploadSignStatus() {
         {uploading ? 'Uploading...' : 'Upload & Start Signature'}
       </button>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-
-      {signatureUrl && (
-        <div>
-          <h3>Signature In Progress</h3>
-          <iframe
-            src={signatureUrl}
-            width="100%"
-            height="600"
-            title="Signature Flow"
-            style={{ border: '1px solid #ccc' }}
-          />
-          <p><strong>Document ID:</strong> {documentId}</p>
-          <p><strong>Signature ID:</strong> {signatureId}</p>
-          <button onClick={checkStatusAndDownload}>Check Status & Download</button>
-        </div>
-      )}
-
+        {error && <p className="error">{error}</p>}
     </div>
   );
 }
