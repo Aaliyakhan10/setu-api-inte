@@ -42,7 +42,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
     if (file && file.type === 'application/pdf') {
       setPdfFile(file);
       toast.success(`Selected file: ${file.name}`);
-      const safeFilename = file.name.replace(/[()]/g, '') || 'uploaded.pdf';
+      const safeFilename = file.name || 'uploaded.pdf';
        setFileName(safeFilename); 
       await handleUploadAndSign();
       
