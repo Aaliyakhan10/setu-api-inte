@@ -15,6 +15,27 @@ const StatusInfo = () => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
   const navigate = useNavigate();
+ 
+const saveRequestToHistory = (docId, signersStatus) => {
+  const key = 'signatureRequests';
+  const existing = JSON.parse(localStorage.getItem(key)) || [];
+  const index = existing.findIndex(entry => entry.documentId === docId);
+
+  if (index !== -1) {
+    existing[index].signersStatus = signersStatus;
+  } else {
+    existing.push({
+      documentId: docId,
+      signatureId: sigId,
+      fileName: fileName,
+      signatureUrl: signUrl,
+      displayName: disName,
+      signersStatus: signersStatus
+    });
+  }
+
+  localStorage.setItem(key, JSON.stringify(existing));
+};
 
   const getCredentials = () => ({
     xClientId: localStorage.getItem('clientId'),
@@ -53,7 +74,7 @@ const StatusInfo = () => {
 
         setSignatureData(statusRes.data);
         setSignatureStatus(statusRes.data?.status || '');
-
+        saveRequestToHistory(documentId, statusRes.data?.signers?.[0]?.status || '');
         if (statusRes.data?.status === 'SIGNED') {
           const downloadRes = await axios.get(`${API_BASE_URL}/api/documents/${documentId}/download`, {
             headers: {
@@ -131,6 +152,7 @@ const StatusInfo = () => {
                       <span className="block"><strong>Birth Year:</strong> {signer.birthYear}</span>
                       <span className="block"><strong>Identifier:</strong> {signer.identifier}</span>
                       <span className="block"><strong>Status:</strong> {signer.status}</span>
+
                     </li>
                   ))}
                 </ul>
