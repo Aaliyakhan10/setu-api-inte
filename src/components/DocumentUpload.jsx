@@ -44,7 +44,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
       toast.success(`Selected file: ${file.name}`);
       const safeFilename ='uploaded.pdf';
        setFileName(safeFilename); 
-      await handleUploadAndSign();
+      await handleUploadAndSign(file);
       
     } else {
       toast.error('Please select a valid PDF file.');
@@ -52,7 +52,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
     }
   };
 
-  const handleUploadAndSign = async () => {
+  const handleUploadAndSign = async (file) => {
     const { xClientId, xClientSecret, xProductInstanceId } = getCredentials();
     
     
@@ -65,11 +65,9 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
       setUploading(true);
       setIsLoading(true);
       
-
-      const formData = new FormData();
-      formData.append('document', pdfFile);
-    
-      formData.append('name',"Document"); 
+        const formData = new FormData();
+    formData.append('document', file); 
+    formData.append('name', "Document");
 
       for (const pair of formData.entries()) {
         console.log(pair[0], pair[1]);
