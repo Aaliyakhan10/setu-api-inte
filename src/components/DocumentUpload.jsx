@@ -15,7 +15,7 @@ function UploadSignStatus() {
   const [fileName, setFileName] = useState('');
 const [isLoading, setIsLoading] = useState(false);
 
-const REDIRECT_URL = import.meta.env.VITE_REDIRECT_URI || '';
+const REDIRECT_URL = import.meta.env.VITE_REDIRECT_URL || 'https://yourapp.com/signature-callback';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
   const saveRequestToHistory = (docId, sigId,fileName,signUrl,disName,signersStatus) => {
