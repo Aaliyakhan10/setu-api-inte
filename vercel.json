@@ -1,8 +1,10 @@
 {
   "rewrites": [
+     { "source": "/(.*)", "destination": "/" },
     {
       "source": "/api/:path*",
       "destination": "https://dg-sandbox.setu.co/api/:path*"
     }
   ]
 }
+
