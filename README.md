@@ -14,6 +14,7 @@ This project fulfills the Setu API integration assignment, covering all three st
 - All API calls are made directly from the frontend, which may expose secrets and cause CORS issues. In real-world scenarios, proxying via a backend or serverless functions is recommended.  
 - File uploads are validated for type and size before submission.  
 - Clear UI feedback is provided for upload progress, success, and error states.
+- ⚠️ **Download API Partially Implemented:** The signed document could not be downloaded because the signing process failed in the emudhra flow during testing. As a result, the sandbox did not return a downloadable document.
 
 ---
 
