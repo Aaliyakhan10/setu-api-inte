@@ -42,7 +42,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
     if (file && file.type === 'application/pdf') {
       setPdfFile(file);
       toast.success(`Selected file: ${file.name}`);
-      const safeFilename = file.name || 'uploaded.pdf';
+      const safeFilename ='uploaded.pdf';
        setFileName(safeFilename); 
       await handleUploadAndSign();
       
@@ -69,7 +69,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
       const formData = new FormData();
       formData.append('document', pdfFile);
     
-      formData.append('name', fileName); 
+      formData.append('name',"Document"); 
 
       for (const pair of formData.entries()) {
         console.log(pair[0], pair[1]);
