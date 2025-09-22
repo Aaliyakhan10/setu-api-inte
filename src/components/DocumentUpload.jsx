@@ -15,6 +15,8 @@ function UploadSignStatus() {
   const [fileName, setFileName] = useState('');
 const [isLoading, setIsLoading] = useState(false);
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
 
   const saveRequestToHistory = (docId, sigId,fileName,signUrl,disName,signersStatus) => {
     const key = 'signatureRequests';
@@ -74,7 +76,7 @@ const [isLoading, setIsLoading] = useState(false);
       }
 
       const uploadRes = await axios.post(
-        '/api/documents',
+        `${API_BASE_URL}/api/documents`,
         formData,
         {
           headers: {
@@ -97,7 +99,7 @@ const [isLoading, setIsLoading] = useState(false);
 
 
      const signatureRes = await axios.post(
-  '/api/signature',
+  `${API_BASE_URL}/api/signature`,
   {
     documentId: docId,
     redirectUrl: 'https://yourapp.com/callback',

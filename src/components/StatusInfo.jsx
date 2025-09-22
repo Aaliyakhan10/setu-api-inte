@@ -12,6 +12,7 @@ const StatusInfo = () => {
   const [signatureStatus, setSignatureStatus] = useState('');
   const [downloadUrl, setDownloadUrl] = useState('');
   const [loading, setLoading] = useState(false);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
   const navigate = useNavigate();
 
@@ -36,7 +37,7 @@ const StatusInfo = () => {
       const { xClientId, xClientSecret, xProductInstanceId } = getCredentials();
 
       try {
-        const statusRes = await axios.get(`/api/signature/${signatureId}`, {
+        const statusRes = await axios.get(`${API_BASE_URL}/api/signature/${signatureId}`, {
           headers: {
             'x-client-id': xClientId,
             'x-client-secret': xClientSecret,
@@ -54,7 +55,7 @@ const StatusInfo = () => {
         setSignatureStatus(statusRes.data?.status || '');
 
         if (statusRes.data?.status === 'SIGNED') {
-          const downloadRes = await axios.get(`/api/documents/${documentId}/download`, {
+          const downloadRes = await axios.get(`${API_BASE_URL}/api/documents/${documentId}/download`, {
             headers: {
               'x-client-id': xClientId,
               'x-client-secret': xClientSecret,
