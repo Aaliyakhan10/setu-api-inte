@@ -149,12 +149,16 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
     const backendError = err.response.data.error || err.response.data;
     const message = backendError.message || JSON.stringify(backendError) || err.message;
     toast.error(`Error: ${message}`);
+    
   } else {
   toast.error("Something went wrong. " + err.message);
+
   }
     } finally {
       setUploading(false);
       setIsLoading(false);
+      setFileName('');
+      setPdfFile(null);
     }
   };
 
