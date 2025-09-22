@@ -77,7 +77,7 @@ const saveRequestToHistory = (docId, signersStatus) => {
         console.log('Signature Status:', statusRes);
         saveRequestToHistory(documentId, statusRes.data?.signers?.[0]?.status || '');
         if (statusRes.data?.status === 'SIGNED') {
-          const downloadRes = await axios.get(`${API_BASE_URL}/api/signature/${documentId}/download`, {
+          const downloadRes = await axios.get(`${API_BASE_URL}/api/signature/${signatureId}/download`, {
             headers: {
               'x-client-id': xClientId,
               'x-client-secret': xClientSecret,
