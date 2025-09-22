@@ -4,6 +4,7 @@ import SettingPage from './pages/SettingPage'
 import StatusPage from './pages/StatusPage'
 import SignDocuments from './pages/SignDocument'
 import StatusInfo from './components/StatusInfo'
+import Home from './pages/Home'
  
 
 
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
     path: '/',
     element: <Layout />,
     children: [
+       {
+        path: '/',
+        element: <Home />
+      },
       {
         path: 'setting',
         element: <SettingPage />
@@ -43,22 +48,6 @@ const router = createBrowserRouter([
       }, 
        { path: 'status/:signatureId/:documentId', element: <StatusInfo /> }, 
 
-      // {
-      //   path:'generate-potfolio',
-      //   element:<ResumeForm/>
-      // },
-      // {
-      //   path:'how-it-works',
-      //   element:<HowWorks/>
-      // },
-      // {
-      //   path:'about',
-      //   element:<About/>
-      // },
-      // {
-      //   path:'verify',
-      //   element:<VerifyEmail/>
-      // }
     ]
   }
 ])

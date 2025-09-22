@@ -40,6 +40,8 @@ const [isLoading, setIsLoading] = useState(false);
     if (file && file.type === 'application/pdf') {
       setPdfFile(file);
       toast.success(`Selected file: ${file.name}`);
+      const safeFilename = file.name.replace(/[()]/g, '') || 'uploaded.pdf';
+       setFileName(safeFilename); 
       await handleUploadAndSign();
       
     } else {
@@ -64,10 +66,8 @@ const [isLoading, setIsLoading] = useState(false);
 
       const formData = new FormData();
       formData.append('document', pdfFile);
-     
-const safeFilename = pdfFile.name.replace(/[()]/g, '') || 'uploaded.pdf';
-setFileName(safeFilename); 
-formData.append('name', safeFilename); 
+    
+      formData.append('name', fileName); 
 
       for (const pair of formData.entries()) {
         console.log(pair[0], pair[1]);
@@ -163,15 +163,19 @@ formData.append('name', safeFilename);
 return (
   <div className="min-h-screen flex justify-center items-center bg-gray-50 px-4">
     {isLoading && <Loading />}
-    <div className="flex flex-col gap-4 w-full sm:w-[75%] md:w-[60%] lg:w-[50%] p-6 border rounded-3xl shadow bg-white items-center">
-      <h2 className="text-2xl font-semibold text-gray-800">Upload & Sign PDF</h2>
+    
+    <div className="flex flex-col gap-6 w-full sm:w-[80%] md:w-[60%] lg:w-[45%] p-8 border border-gray-200 rounded-3xl shadow-md bg-white items-center transition-all duration-300">
+      <h2 className="text-2xl font-bold text-teal-700 text-center">
+        Upload & Sign PDF
+      </h2>
 
       <label
         htmlFor="pdf-upload"
-        className="cursor-pointer px-6 py-3 text-white bg-teal-600 hover:bg-teal-700 text-lg font-medium rounded-xl shadow transition duration-200"
+        className="w-full text-center cursor-pointer px-6 py-3 text-white bg-teal-600 hover:bg-teal-700 text-lg font-semibold rounded-xl shadow transition duration-200"
       >
-        Upload & Start Signature
+        📄 Upload & Start Signature
       </label>
+
       <input
         id="pdf-upload"
         type="file"
@@ -181,16 +185,28 @@ return (
       />
 
       {fileName && (
-        <p className="text-sm text-gray-600">Selected file: {fileName}</p>
+        <div className="flex items-center gap-2 mt-2 text-sm text-gray-700 bg-gray-100 px-4 py-2 rounded-md w-full">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 text-teal-600"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V8l-4-4H4z" />
+            <path d="M8 8h4v1H8V8zM8 10h4v1H8v-1zM8 12h2v1H8v-1z" />
+          </svg>
+          <span>Selected file: <strong>{fileName}</strong></span>
+        </div>
       )}
 
-      <ul className="list-disc text-sm text-gray-500 pl-5">
-        <li>Only PDF files are allowed.</li>
-        <li>
-          Ensure credentials (
-          <code>clientId</code>, <code>clientSecret</code>,{' '}
-          <code>productInstanceId</code>) are set in localStorage.
-        </li>
+      <ul className="text-sm text-gray-500 space-y-1 list-disc pl-6 w-full">
+        <li>Only <code className="bg-gray-100 px-1 rounded">.pdf</code> files are allowed.</li>
+        <li>Ensure credentials are stored in <code className="bg-gray-100 px-1 rounded">localStorage</code>:</li>
+        <ul className="list-disc pl-6">
+          <li><code>clientId</code></li>
+          <li><code>clientSecret</code></li>
+          <li><code>productInstanceId</code></li>
+        </ul>
       </ul>
     </div>
   </div>
