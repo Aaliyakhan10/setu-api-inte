@@ -48,7 +48,7 @@ const StatusPage = () => {
                       : 'bg-yellow-100 text-yellow-700'
                     }`}
                   >
-                    {signerStatus}
+                    {signerStatus==='SIGNED' ? 'Signed' : 'Pending'}
                   </span>
                 </div>
               </div>

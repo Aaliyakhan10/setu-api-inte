@@ -16,7 +16,7 @@ function UploadSignStatus() {
 const [isLoading, setIsLoading] = useState(false);
 
 const REDIRECT_URL = import.meta.env.VITE_REDIRECT_URI || '';
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
   const saveRequestToHistory = (docId, sigId,fileName,signUrl,disName,signersStatus) => {
     const key = 'signatureRequests';
@@ -203,6 +203,7 @@ return (
 
       <ul className="text-sm text-gray-500 space-y-1 list-disc pl-6 w-full">
         <li>Only <code className="bg-gray-100 px-1 rounded">.pdf</code> files are allowed.</li>
+         <li>Try uplaoding again by renaming PDF  <code className="bg-gray-100 px-1 rounded">If error occured</code></li>
         <li>Ensure credentials are stored in <code className="bg-gray-100 px-1 rounded">localStorage</code>:</li>
         <ul className="list-disc pl-6">
           <li><code>clientId</code></li>
