@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'react-toastify';
+import Loading from './Loading';
 
 const StatusInfo = () => {
   const { signatureId, documentId } = useParams();
-  const navigate = useNavigate();
 
+  const [signatureData, setSignatureData] = useState(null);
   const [signatureStatus, setSignatureStatus] = useState('');
   const [downloadUrl, setDownloadUrl] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   const getCredentials = () => ({
     xClientId: localStorage.getItem('clientId'),
@@ -20,13 +23,13 @@ const StatusInfo = () => {
   useEffect(() => {
     const checkStatusAndDownload = async () => {
       if (!signatureId || !documentId) {
-        setError('Invalid signature or document ID.');
+        toast.error('Invalid signature or document ID.');
         return;
       }
 
       setLoading(true);
-      setError('');
       setSignatureStatus('');
+      setSignatureData(null);
       setDownloadUrl('');
 
       const { xClientId, xClientSecret, xProductInstanceId } = getCredentials();
@@ -41,13 +44,15 @@ const StatusInfo = () => {
         });
 
         if (!statusRes.status || statusRes.status >= 400) {
-          throw new Error(statusRes.data?.message || 'Failed to fetch signature status.');
+          toast.error(statusRes.data?.message || 'Failed to fetch signature status.');
+          setLoading(false);
+          return;
         }
 
-        const status = statusRes.data?.status || '';
-        setSignatureStatus(status);
+        setSignatureData(statusRes.data);
+        setSignatureStatus(statusRes.data?.status || '');
 
-        if (status === 'SIGNED') {
+        if (statusRes.data?.status === 'SIGNED') {
           const downloadRes = await axios.get(`/api/documents/${documentId}/download`, {
             headers: {
               'x-client-id': xClientId,
@@ -60,10 +65,10 @@ const StatusInfo = () => {
           const url = window.URL.createObjectURL(new Blob([downloadRes.data]));
           setDownloadUrl(url);
         } else {
-          setError('Document not signed yet.');
+          toast.info('Document not signed yet.');
         }
       } catch (err) {
-        setError(err.message || 'Something went wrong.');
+        toast.error(err.message || 'Something went wrong.');
       } finally {
         setLoading(false);
       }
@@ -75,22 +80,42 @@ const StatusInfo = () => {
   return (
     <div className="max-w-3xl mx-auto p-6">
       <button
-        onClick={() => navigate(-1)}
+        onClick={() => navigate('/status')}
         className="mb-4 px-3 py-1 rounded bg-gray-300 hover:bg-gray-400"
       >
         ← Back
       </button>
       <h2 className="text-2xl font-semibold mb-6">Signature Status</h2>
 
-      {loading && <p>Loading...</p>}
+      {loading && <Loading />}
 
-      {error && <p className="mb-4 text-red-600 font-medium">{error}</p>}
-
-      {!loading && !error && (
+      {!loading && signatureData && (
         <>
-          <p className="mb-4">
-            Status: <strong>{signatureStatus}</strong>
-          </p>
+          <p><strong>Document ID:</strong> {signatureData.documentId}</p>
+          <p><strong>Signature Request ID:</strong> {signatureData.id}</p>
+          
+          <p><strong>Reason:</strong> {signatureData.reason || 'N/A'}</p>
+    
+          <p><strong>Status:</strong> {signatureData.status}</p>
+      
+
+          <div>
+            <strong>Signers:</strong>
+            {signatureData.signers && signatureData.signers.length > 0 ? (
+              <ul className="list-disc pl-6">
+                {signatureData.signers.map((signer) => (
+                  <li key={signer.id}>
+                    Name: {signer.displayName},
+                     Birth Year: {signer.birthYear},
+                      Identifier: {signer.identifier},
+                     Status: {signer.status}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No signers available.</p>
+            )}
+          </div>
 
           {downloadUrl && (
             <a
@@ -98,10 +123,14 @@ const StatusInfo = () => {
               download={`signed-${documentId}.pdf`}
               className="inline-block mt-4 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md"
             >
-              ⬇️ Download Signed PDF
+              Download Signed PDF
             </a>
           )}
         </>
+      )}
+
+      {!loading && !signatureData && (
+        <p className="text-gray-600">No signature data available.</p>
       )}
     </div>
   );

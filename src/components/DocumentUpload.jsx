@@ -1,20 +1,28 @@
 import axios from 'axios';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import Loading from './Loading';
 
 function UploadSignStatus() {
+  const navigate = useNavigate();
   const [pdfFile, setPdfFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [documentId, setDocumentId] = useState('');
   const [signatureId, setSignatureId] = useState('');
+
   const [signatureUrl, setSignatureUrl] = useState('');
+  const [fileName, setFileName] = useState('');
+const [isLoading, setIsLoading] = useState(false);
 
-  const [error, setError] = useState('');
 
-  const saveRequestToHistory = (docId, sigId) => {
+  const saveRequestToHistory = (docId, sigId,fileName,signUrl,disName,signersStatus) => {
     const key = 'signatureRequests';
+  
+ 
    
     const existing = JSON.parse(localStorage.getItem(key)) || [];
-    const updated = [...existing, { documentId: docId, signatureId: sigId }];
+    const updated = [...existing, { documentId: docId, signatureId: sigId ,fileName:fileName ,signatureUrl:signUrl,displayName:disName ,signersStatus:signersStatus}];
     localStorage.setItem(key, JSON.stringify(updated));
   };
 
@@ -25,32 +33,41 @@ function UploadSignStatus() {
       xProductInstanceId: localStorage.getItem('productInstanceId'),
     };
   };
+ 
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async(e) => {
     const file = e.target.files?.[0];
     if (file && file.type === 'application/pdf') {
       setPdfFile(file);
-      setError('');
+      toast.success(`Selected file: ${file.name}`);
+      await handleUploadAndSign();
+      
     } else {
-      setError('Please select a valid PDF file.');
+      toast.error('Please select a valid PDF file.');
+      return;
     }
   };
 
   const handleUploadAndSign = async () => {
     const { xClientId, xClientSecret, xProductInstanceId } = getCredentials();
-
-    if (!pdfFile) return setError('Select a PDF file.');
+    
+    
     if (!xClientId || !xClientSecret || !xProductInstanceId) {
-      return setError('Missing credentials in localStorage.');
+       toast.error('Missing credentials in localStorage.');
+       return;
     }
 
     try {
       setUploading(true);
-      setError('');
+      setIsLoading(true);
+      
 
       const formData = new FormData();
       formData.append('document', pdfFile);
-      formData.append('name', "sample.pdf");
+     
+const safeFilename = pdfFile.name.replace(/[()]/g, '') || 'uploaded.pdf';
+setFileName(safeFilename); 
+formData.append('name', safeFilename); 
 
       for (const pair of formData.entries()) {
         console.log(pair[0], pair[1]);
@@ -70,7 +87,7 @@ function UploadSignStatus() {
 
       const uploadData = uploadRes.data;
       if (!uploadRes.status || uploadRes.status >= 400) {
-        throw new Error(uploadData?.message || 'Document upload failed.');
+        toast.error(uploadData?.message || 'Document upload failed.');
       }
       console.log('Upload Response:', uploadData);
 
@@ -112,7 +129,7 @@ function UploadSignStatus() {
 
       const signatureData = signatureRes.data;
       if (!signatureRes.status || signatureRes.status >= 400) {
-        throw new Error(signatureData?.message || 'Signature request failed.');
+        toast.error(signatureData?.message || 'Signature request failed.');
       }
 
       setSignatureId(signatureData?.id);
@@ -120,37 +137,65 @@ function UploadSignStatus() {
       console.log('Signature ID:', signatureData?.id);
       console.log('Signature URL:', signatureData?.signers?.[0]?.url);
       setSignatureUrl(signatureData?.signers?.[0]?.url);
-      saveRequestToHistory(docId, signatureData?.id);
+      saveRequestToHistory(docId, signatureData?.id,fileName,signatureData?.signers?.[0]?.url,signatureData?.signers?.[0]?.displayName,signatureData.signers?.[0]?.status);
+      toast.success('Document uploaded and signature initiated!');
+      navigate(`/status/${signatureData?.id}/${docId}`);
+       
 
     } catch (err) {
        if (err.response) {
    console.error('Backend error response:', err.response.data);
-    // Try to print nested error message
+
     const backendError = err.response.data.error || err.response.data;
     const message = backendError.message || JSON.stringify(backendError) || err.message;
-    setError(message);
+    toast.error(`Error: ${message}`);
   } else {
-    setError(err.message || 'Something went wrong.');
+  toast.error("Something went wrong. " + err.message);
   }
     } finally {
       setUploading(false);
+      setIsLoading(false);
     }
   };
 
 
 
-  return (
-    <div>
-      <h2>Upload & Sign PDF</h2>
+return (
+  <div className="min-h-screen flex justify-center items-center bg-gray-50 px-4">
+    {isLoading && <Loading />}
+    <div className="flex flex-col gap-4 w-full sm:w-[75%] md:w-[60%] lg:w-[50%] p-6 border rounded-3xl shadow bg-white items-center">
+      <h2 className="text-2xl font-semibold text-gray-800">Upload & Sign PDF</h2>
 
-      <input type="file" accept="application/pdf" onChange={handleFileChange} />
-      <button onClick={handleUploadAndSign} disabled={uploading}>
-        {uploading ? 'Uploading...' : 'Upload & Start Signature'}
-      </button>
+      <label
+        htmlFor="pdf-upload"
+        className="cursor-pointer px-6 py-3 text-white bg-teal-600 hover:bg-teal-700 text-lg font-medium rounded-xl shadow transition duration-200"
+      >
+        Upload & Start Signature
+      </label>
+      <input
+        id="pdf-upload"
+        type="file"
+        accept="application/pdf"
+        onChange={handleFileChange}
+        className="hidden"
+      />
 
-        {error && <p className="error">{error}</p>}
+      {fileName && (
+        <p className="text-sm text-gray-600">Selected file: {fileName}</p>
+      )}
+
+      <ul className="list-disc text-sm text-gray-500 pl-5">
+        <li>Only PDF files are allowed.</li>
+        <li>
+          Ensure credentials (
+          <code>clientId</code>, <code>clientSecret</code>,{' '}
+          <code>productInstanceId</code>) are set in localStorage.
+        </li>
+      </ul>
     </div>
-  );
+  </div>
+);
+
 }
 
 export default UploadSignStatus;
